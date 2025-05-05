@@ -857,46 +857,92 @@ def main():
                             st.session_state.processed_audio = True
                             st.success(f"Transcribed ({SUPPORTED_LANGUAGES[detected_lang]}): {user_input}")
 
-    elif input_method == "Record Voice":
-        st.warning("Voice recording may require microphone permissions")
-        
-        if st.button("🎤 Start/Stop Recording"):
-            st.session_state.recording = not st.session_state.recording
-            if not st.session_state.recording and st.session_state.audio_buffer:
-                # Process recorded audio
-                with st.spinner("Processing your voice..."):
-                    try:
-                        audio_array = np.concatenate(st.session_state.audio_buffer)
-                        audio_segment = AudioSegment(
-                            audio_array.tobytes(),
-                            frame_rate=44100,
-                            sample_width=audio_array.dtype.itemsize,
-                            channels=1
-                        )
-                        
-                        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-                            audio_segment.export(tmp.name, format="wav")
-                            user_input = transcribe_audio(tmp.name)
-                            os.unlink(tmp.name)
-                            
-                            if user_input and not user_input.startswith("Error"):
-                                detected_lang = detect_language(user_input)
-                                st.session_state.audio_buffer = []
-                                st.success(f"Transcribed ({SUPPORTED_LANGUAGES[detected_lang]}): {user_input}")
-                            else:
-                                st.error("Could not process audio")
-                    except Exception as e:
-                        st.error(f"Error processing recording: {str(e)}")
+    # Replace the voice recording section in your existing code with this improved version:
 
-        if st.session_state.recording:
-            webrtc_streamer(
-                key="voice-recorder",
-                mode=WebRtcMode.SENDONLY,
-                audio_frame_callback=audio_frame_callback,
-                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
-                media_stream_constraints={"audio": True, "video": False},
-            )
-            st.info("Recording in progress... Speak now")
+    elif input_method == "Record Voice":
+      st.markdown("""
+    <style>
+    .recording-status {
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+        text-align: center;
+        font-weight: bold;
+    }
+    .recording-active {
+        background-color: #ffebee;
+        color: #c62828;
+    }
+    .recording-inactive {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.warning("Please allow microphone access when prompted")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("🎤 Start Recording", key="start_recording", 
+                    disabled=st.session_state.get('recording', False)):
+            st.session_state.recording = True
+            st.session_state.audio_buffer = []
+            st.session_state.processed_audio = False
+            st.rerun()
+    
+    with col2:
+        if st.button("⏹ Stop Recording", key="stop_recording",
+                    disabled=not st.session_state.get('recording', False)):
+            st.session_state.recording = False
+            st.rerun()
+    
+    if st.session_state.get('recording', False):
+        st.markdown('<div class="recording-status recording-active">Recording... Speak now</div>', 
+                   unsafe_allow_html=True)
+        
+        webrtc_ctx = webrtc_streamer(
+            key="voice-recorder",
+            mode=WebRtcMode.SENDONLY,
+            audio_frame_callback=audio_frame_callback,
+            rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+            media_stream_constraints={"audio": True, "video": False},
+            async_processing=True,
+        )
+        
+        if webrtc_ctx.state.playing and not st.session_state.recording:
+            webrtc_ctx.stop()
+    else:
+        st.markdown('<div class="recording-status recording-inactive">Recording stopped</div>', 
+                   unsafe_allow_html=True)
+    
+    if not st.session_state.recording and st.session_state.get('audio_buffer') and not st.session_state.processed_audio:
+        with st.spinner("Processing your voice..."):
+            try:
+                audio_array = np.concatenate(st.session_state.audio_buffer)
+                audio_segment = AudioSegment(
+                    audio_array.tobytes(),
+                    frame_rate=44100,
+                    sample_width=audio_array.dtype.itemsize,
+                    channels=1
+                )
+                
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+                    audio_segment.export(tmp.name, format="wav")
+                    user_input = transcribe_audio(tmp.name)
+                    os.unlink(tmp.name)
+                    
+                    if user_input and not user_input.startswith("Error"):
+                        detected_lang = detect_language(user_input)
+                        st.session_state.processed_audio = True
+                        st.success(f"Transcribed ({SUPPORTED_LANGUAGES[detected_lang]}): {user_input}")
+                        st.session_state.audio_buffer = []
+                    else:
+                        st.error("Could not process audio. Please try again.")
+            except Exception as e:
+                st.error(f"Error processing recording: {str(e)}")
+                st.session_state.audio_buffer = []
 
     # Reset processed_audio flag when switching input methods
     if input_method != "Upload Audio":
