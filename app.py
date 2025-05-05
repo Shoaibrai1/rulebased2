@@ -13,7 +13,7 @@ from langdetect import detect
 from googletrans import Translator
 import av
 import numpy as np
-from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
+from streamlit_webrtc import webrtc_streamer, WebRtcMode
 
 # Initialize NLTK
 def initialize_nltk():
@@ -723,8 +723,8 @@ def get_response(intent, lang='en'):
     if intent in RULES:
         responses = RULES[intent]["responses"]
         if lang in responses:
-            return responses[lang] 
-        return responses['en'] 
+            return responses[lang] if isinstance(responses[lang], str) else random.choice(responses[lang])
+        return responses['en'] if isinstance(responses['en'], str) else random.choice(responses['en'])
     return random.choice(RULES["default"]["responses"])
 
 def audio_frame_callback(frame: av.AudioFrame) -> av.AudioFrame:
@@ -733,6 +733,15 @@ def audio_frame_callback(frame: av.AudioFrame) -> av.AudioFrame:
             st.session_state.audio_buffer = []
         st.session_state.audio_buffer.append(frame.to_ndarray())
     return frame
+
+def save_uploaded_file(uploaded_file):
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp_file:
+            tmp_file.write(uploaded_file.getvalue())
+            return tmp_file.name
+    except Exception as e:
+        st.error(f"Error saving file: {str(e)}")
+        return None
 
 def main():
     st.set_page_config(
@@ -787,25 +796,45 @@ def main():
     detected_lang = 'en'
 
     if input_method == "Upload Audio":
-        audio_file = st.file_uploader("Upload audio file (MP3, WAV, OGG, M4A, MP4)", 
-                                    type=["mp3", "wav", "ogg", "m4a", "mp4"])
-        if audio_file:
-            with st.spinner("Processing audio..."):
-                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-                    audio = AudioSegment.from_file(audio_file)
-                    audio.export(tmp.name, format="wav")
-                    user_input = transcribe_audio(tmp.name, 'en')
-                    os.unlink(tmp.name)
-                    if user_input:
-                        detected_lang = detect_language(user_input)
-                        if detected_lang != 'en':
-                            audio_file.seek(0)
-                            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-                                audio = AudioSegment.from_file(audio_file)
-                                audio.export(tmp.name, format="wav")
-                                user_input = transcribe_audio(tmp.name, detected_lang)
-                                os.unlink(tmp.name)
-                        st.success(f"Transcribed ({SUPPORTED_LANGUAGES[detected_lang]}): {user_input}")
+        audio_file = st.file_uploader(
+            "Drag and drop file here\nLimit 200MB per file • MP3, WAV, OGG, M4A, MP4", 
+            type=["mp3", "wav", "ogg", "m4a", "mp4"]
+        )
+        
+        if audio_file is not None:
+            # Check file size
+            if audio_file.size > 200 * 1024 * 1024:  # 200MB
+                st.error("File size exceeds 200MB limit")
+            else:
+                with st.spinner("Processing audio..."):
+                    try:
+                        # Save the uploaded file temporarily
+                        temp_path = save_uploaded_file(audio_file)
+                        if temp_path:
+                            # Convert to WAV format if needed
+                            try:
+                                audio = AudioSegment.from_file(temp_path)
+                                wav_path = temp_path + ".wav"
+                                audio.export(wav_path, format="wav")
+                                
+                                # Transcribe the audio
+                                user_input = transcribe_audio(wav_path, 'en')
+                                
+                                if user_input and not user_input.startswith("Error"):
+                                    detected_lang = detect_language(user_input)
+                                    if detected_lang != 'en':
+                                        user_input = transcribe_audio(wav_path, detected_lang)
+                                    st.success(f"Transcribed ({SUPPORTED_LANGUAGES[detected_lang]}): {user_input}")
+                            except Exception as e:
+                                st.error(f"Error processing audio: {str(e)}")
+                            finally:
+                                # Clean up temporary files
+                                if os.path.exists(temp_path):
+                                    os.unlink(temp_path)
+                                if 'wav_path' in locals() and os.path.exists(wav_path):
+                                    os.unlink(wav_path)
+                    except Exception as e:
+                        st.error(f"Error handling file: {str(e)}")
 
     elif input_method == "Record Voice":
         st.warning("Voice recording may require microphone permissions")
@@ -815,35 +844,37 @@ def main():
             if not st.session_state.recording and st.session_state.audio_buffer:
                 # Process recorded audio
                 with st.spinner("Processing your voice..."):
-                    audio_array = np.concatenate(st.session_state.audio_buffer)
-                    audio_segment = AudioSegment(
-                        audio_array.tobytes(),
-                        frame_rate=44100,
-                        sample_width=audio_array.dtype.itemsize,
-                        channels=1
-                    )
-                    
-                    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-                        audio_segment.export(tmp.name, format="wav")
-                        user_input = transcribe_audio(tmp.name)
-                        os.unlink(tmp.name)
+                    try:
+                        audio_array = np.concatenate(st.session_state.audio_buffer)
+                        audio_segment = AudioSegment(
+                            audio_array.tobytes(),
+                            frame_rate=44100,
+                            sample_width=audio_array.dtype.itemsize,
+                            channels=1
+                        )
                         
-                        if user_input and not user_input.startswith("Error"):
-                            detected_lang = detect_language(user_input)
-                            st.session_state.audio_buffer = []
-                            st.success(f"Transcribed ({SUPPORTED_LANGUAGES[detected_lang]}): {user_input}")
-                        else:
-                            st.error("Could not process audio")
+                        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+                            audio_segment.export(tmp.name, format="wav")
+                            user_input = transcribe_audio(tmp.name)
+                            os.unlink(tmp.name)
+                            
+                            if user_input and not user_input.startswith("Error"):
+                                detected_lang = detect_language(user_input)
+                                st.session_state.audio_buffer = []
+                                st.success(f"Transcribed ({SUPPORTED_LANGUAGES[detected_lang]}): {user_input}")
+                            else:
+                                st.error("Could not process audio")
+                    except Exception as e:
+                        st.error(f"Error processing recording: {str(e)}")
 
         if st.session_state.recording:
             webrtc_streamer(
                 key="voice-recorder",
                 mode=WebRtcMode.SENDONLY,
                 audio_frame_callback=audio_frame_callback,
-                client_settings=ClientSettings(
-                    rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
-                    media_stream_constraints={"audio": True, "video": False},
-                ))
+                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+                media_stream_constraints={"audio": True, "video": False},
+            )
             st.info("Recording in progress... Speak now")
 
     # Text input fallback
