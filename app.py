@@ -720,9 +720,11 @@ def detect_intent(user_input, lang='en'):
     for intent, data in RULES.items():
         if lang in data["patterns"]:
             for pattern in data["patterns"][lang]:
-                if lang == 'ar':
+                # Special handling for Arabic and Chinese
+                if lang in ['ar', 'zh']:
                     if pattern in processed_input:
                         return intent
+                # Special handling for English and other languages with word boundaries
                 else:
                     if re.search(r'\b' + re.escape(pattern) + r'\b', processed_input):
                         return intent
