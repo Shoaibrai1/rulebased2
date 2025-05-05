@@ -1,0 +1,9 @@
+streamlit
+nltk
+SpeechRecognition
+pydub
+langdetect
+googletrans
+python-dotenv
+streamlit_webrtc
+numpy
