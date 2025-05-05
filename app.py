@@ -723,8 +723,8 @@ def get_response(intent, lang='en'):
     if intent in RULES:
         responses = RULES[intent]["responses"]
         if lang in responses:
-            return responses[lang] if isinstance(responses[lang], str) else random.choice(responses[lang])
-        return responses['en'] if isinstance(responses['en'], str) else random.choice(responses['en'])
+            return responses[lang]
+        return responses['en'] 
     return random.choice(RULES["default"]["responses"])
 
 def audio_frame_callback(frame: av.AudioFrame) -> av.AudioFrame:
