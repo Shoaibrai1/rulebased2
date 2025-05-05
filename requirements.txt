@@ -6,5 +6,4 @@ langdetect
 googletrans
 python-dotenv
 streamlit-webrtc==0.42.0
-
 numpy
