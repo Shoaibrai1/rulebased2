@@ -734,13 +734,50 @@ def audio_frame_callback(frame: av.AudioFrame) -> av.AudioFrame:
         st.session_state.audio_buffer.append(frame.to_ndarray())
     return frame
 
-def save_uploaded_file(uploaded_file):
+def process_uploaded_audio(audio_file):
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp_file:
-            tmp_file.write(uploaded_file.getvalue())
-            return tmp_file.name
+        # Create a temporary file with the correct extension
+        file_ext = os.path.splitext(audio_file.name)[1].lower()
+        with tempfile.NamedTemporaryFile(suffix=file_ext, delete=False) as tmp_file:
+            tmp_file.write(audio_file.getvalue())
+            temp_path = tmp_file.name
+        
+        # First try to process with original extension
+        try:
+            audio = AudioSegment.from_file(temp_path)
+        except Exception as e:
+            st.warning(f"First attempt failed: {str(e)}. Trying with forced format...")
+            # If failed, try forcing format based on extension
+            if file_ext == '.mp3':
+                audio = AudioSegment.from_mp3(temp_path)
+            elif file_ext == '.wav':
+                audio = AudioSegment.from_wav(temp_path)
+            elif file_ext == '.ogg':
+                audio = AudioSegment.from_ogg(temp_path)
+            elif file_ext in ('.m4a', '.mp4', '.mpeg4'):
+                audio = AudioSegment.from_file(temp_path, format='mp4')
+            else:
+                raise Exception(f"Unsupported file format: {file_ext}")
+        
+        # Convert to WAV for speech recognition
+        wav_path = temp_path + ".wav"
+        audio.export(wav_path, format="wav")
+        
+        # Transcribe
+        user_input = transcribe_audio(wav_path, 'en')
+        
+        # Clean up
+        os.unlink(temp_path)
+        os.unlink(wav_path)
+        
+        return user_input
+        
     except Exception as e:
-        st.error(f"Error saving file: {str(e)}")
+        st.error(f"Error processing audio file: {str(e)}")
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
+        if 'wav_path' in locals() and os.path.exists(wav_path):
+            os.unlink(wav_path)
         return None
 
 def main():
@@ -797,8 +834,8 @@ def main():
 
     if input_method == "Upload Audio":
         audio_file = st.file_uploader(
-            "Drag and drop file here\nLimit 200MB per file • MP3, WAV, OGG, M4A, MP4", 
-            type=["mp3", "wav", "ogg", "m4a", "mp4"]
+            "Drag and drop file here\nLimit 200MB per file • MP3, WAV, OGG, M4A, MP4, MPEG4", 
+            type=["mp3", "wav", "ogg", "m4a", "mp4", "mpg4"]
         )
         
         if audio_file is not None:
@@ -807,34 +844,14 @@ def main():
                 st.error("File size exceeds 200MB limit")
             else:
                 with st.spinner("Processing audio..."):
-                    try:
-                        # Save the uploaded file temporarily
-                        temp_path = save_uploaded_file(audio_file)
-                        if temp_path:
-                            # Convert to WAV format if needed
-                            try:
-                                audio = AudioSegment.from_file(temp_path)
-                                wav_path = temp_path + ".wav"
-                                audio.export(wav_path, format="wav")
-                                
-                                # Transcribe the audio
-                                user_input = transcribe_audio(wav_path, 'en')
-                                
-                                if user_input and not user_input.startswith("Error"):
-                                    detected_lang = detect_language(user_input)
-                                    if detected_lang != 'en':
-                                        user_input = transcribe_audio(wav_path, detected_lang)
-                                    st.success(f"Transcribed ({SUPPORTED_LANGUAGES[detected_lang]}): {user_input}")
-                            except Exception as e:
-                                st.error(f"Error processing audio: {str(e)}")
-                            finally:
-                                # Clean up temporary files
-                                if os.path.exists(temp_path):
-                                    os.unlink(temp_path)
-                                if 'wav_path' in locals() and os.path.exists(wav_path):
-                                    os.unlink(wav_path)
-                    except Exception as e:
-                        st.error(f"Error handling file: {str(e)}")
+                    user_input = process_uploaded_audio(audio_file)
+                    if user_input:
+                        detected_lang = detect_language(user_input)
+                        if detected_lang != 'en':
+                            audio_file.seek(0)
+                            user_input = process_uploaded_audio(audio_file)
+                        if user_input and not user_input.startswith("Error"):
+                            st.success(f"Transcribed ({SUPPORTED_LANGUAGES[detected_lang]}): {user_input}")
 
     elif input_method == "Record Voice":
         st.warning("Voice recording may require microphone permissions")
