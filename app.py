@@ -724,26 +724,30 @@ def detect_intent(user_input, lang='en'):
     return "default"
 
 def get_response(intent, lang='en'):
-    
     try:
-        if intent in RULES:
-            responses = RULES[intent]["responses"]
-            # Check if we have responses in the detected language
-            if lang in responses:
-                # If it's a list, choose random, otherwise return the full response
-                if isinstance(responses[lang], list):
-                    return random.choice(responses[lang])
-                return responses[lang]
-            # Fallback to English if language not available
-            if isinstance(responses['en'], list):
-                return random.choice(responses['en'])
-            return responses['en']
+        # Safely navigate the RULES dictionary
+        responses = RULES.get(intent, {}).get("responses", {})
+        lang_responses = responses.get(lang, responses.get('en', []))
+        
+        # Handle both string and list responses
+        if isinstance(lang_responses, str):
+            return lang_responses
+        elif isinstance(lang_responses, list) and lang_responses:
+            return random.choice(lang_responses)
+        
+        # Fallback to default responses
+        default_responses = RULES.get("default", {}).get("responses", {}).get(lang, [])
+        if isinstance(default_responses, str):
+            return default_responses
+        elif isinstance(default_responses, list) and default_responses:
+            return random.choice(default_responses)
+        
+        # Ultimate fallback
+        return "I didn't understand that. Could you rephrase?"
+        
     except Exception as e:
-        st.error(f"Response generation error: {str(e)}")
-    
-    # Ultimate fallback
-    return random.choice(RULES["default"]["responses"])
-
+        print(f"Error getting response: {str(e)}")
+        return "Sorry, I encountered an error. Please try again."
 def audio_frame_callback(frame: av.AudioFrame) -> av.AudioFrame:
     if st.session_state.get('recording'):
         if 'audio_buffer' not in st.session_state:
