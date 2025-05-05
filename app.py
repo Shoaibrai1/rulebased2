@@ -13,7 +13,7 @@ from langdetect import detect
 from googletrans import Translator
 import av
 import numpy as np
-from streamlit_webrtc import webrtc_streamer, WebRtcMode
+
 
 # Initialize NLTK
 def initialize_nltk():
