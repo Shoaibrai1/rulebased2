@@ -653,23 +653,16 @@ RULES = {
 - Dedizierte Projektmanager"""
     }
 },
-"default": {
-    "responses": {
-        'en': ["I'm not sure I understand. Could you rephrase your question?",
-               "Let me connect you to a human expert who can help...",
-               "Try asking about our services, pricing, or portfolio!"],
-        'ar': ["أنا لست متأكدًا من أنني أفهم. هل يمكنك إعادة صياغة سؤالك؟",
-               "دعني أوصلك بخبير بشري يمكنه المساعدة..."],
-        'zh': ["我不确定我是否理解。你能重新表述你的问题吗？",
-               "让我为您联系可以帮助您的人类专家..."],
-        'ur': ["مجھے یقین نہیں ہے کہ میں سمجھتا ہوں۔ کیا آپ اپنا سوال دوبارہ بیان کر سکتے ہیں؟",
-               "مجھے آپ کو ایک انسانی ماہر سے جوڑنے دیں جو مدد کر سکتا ہے..."],
-        'hi': ["मुझे यकीन नहीं है कि मैं समझता हूँ। क्या आप अपना प्रश्न फिर से बता सकते हैं?",
-               "मुझे आपको एक मानव विशेषज्ञ से जोड़ने दें जो मदद कर सकता है..."],
-        'de': ["Ich bin mir nicht sicher, ob ich es verstehe. Könnten Sie Ihre Frage umformulieren?",
-               "Lassen Sie mich Sie mit einem menschlichen Experten verbinden, der helfen kann..."]
+ "default": {
+        "responses": {
+            'en': ["I'm not sure I understand. Could you rephrase that?"],
+            'ar': ["أنا لست متأكدًا من فهمي. هل يمكنك إعادة صياغة ذلك؟"],
+            'zh': ["我不太明白。您能换种说法吗？"],
+            'ur': ["مجھے سمجھ نہیں آیا۔ کیا آپ اسے دوبارہ کہہ سکتے ہیں؟"],
+            'hi': ["मुझे समझ नहीं आया। क्या आप इसे दोबारा कह सकते हैं?"],
+            'de': ["Ich bin mir nicht sicher, ob ich das verstehe. Könnten Sie das anders formulieren?"]
+        }
     }
-}
 }
 
 def transcribe_audio(audio_path, lang='en'):
