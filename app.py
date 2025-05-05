@@ -654,12 +654,21 @@ RULES = {
     }
 },
 "default": {
-    "responses": [
-        "I'm not sure I understand. Could you rephrase your question?",
-        "Let me connect you to a human expert who can help...",
-        "Try asking about our services, pricing, or portfolio!",
-        "I'm still learning! Could you ask about our capabilities or services?"
-    ]
+    "responses": {
+        'en': ["I'm not sure I understand. Could you rephrase your question?",
+               "Let me connect you to a human expert who can help...",
+               "Try asking about our services, pricing, or portfolio!"],
+        'ar': ["أنا لست متأكدًا من أنني أفهم. هل يمكنك إعادة صياغة سؤالك؟",
+               "دعني أوصلك بخبير بشري يمكنه المساعدة..."],
+        'zh': ["我不确定我是否理解。你能重新表述你的问题吗？",
+               "让我为您联系可以帮助您的人类专家..."],
+        'ur': ["مجھے یقین نہیں ہے کہ میں سمجھتا ہوں۔ کیا آپ اپنا سوال دوبارہ بیان کر سکتے ہیں؟",
+               "مجھے آپ کو ایک انسانی ماہر سے جوڑنے دیں جو مدد کر سکتا ہے..."],
+        'hi': ["मुझे यकीन नहीं है कि मैं समझता हूँ। क्या आप अपना प्रश्न फिर से बता सकते हैं?",
+               "मुझे आपको एक मानव विशेषज्ञ से जोड़ने दें जो मदद कर सकता है..."],
+        'de': ["Ich bin mir nicht sicher, ob ich es verstehe. Könnten Sie Ihre Frage umformulieren?",
+               "Lassen Sie mich Sie mit einem menschlichen Experten verbinden, der helfen kann..."]
+    }
 }
 }
 
@@ -720,11 +729,24 @@ def detect_intent(user_input, lang='en'):
     return "default"
 
 def get_response(intent, lang='en'):
-    if intent in RULES:
-        responses = RULES[intent]["responses"]
-        if lang in responses:
-            return responses[lang]
-        return responses['en'] 
+    
+    try:
+        if intent in RULES:
+            responses = RULES[intent]["responses"]
+            # Check if we have responses in the detected language
+            if lang in responses:
+                # If it's a list, choose random, otherwise return the full response
+                if isinstance(responses[lang], list):
+                    return random.choice(responses[lang])
+                return responses[lang]
+            # Fallback to English if language not available
+            if isinstance(responses['en'], list):
+                return random.choice(responses['en'])
+            return responses['en']
+    except Exception as e:
+        st.error(f"Response generation error: {str(e)}")
+    
+    # Ultimate fallback
     return random.choice(RULES["default"]["responses"])
 
 def audio_frame_callback(frame: av.AudioFrame) -> av.AudioFrame:
