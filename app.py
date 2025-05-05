@@ -820,6 +820,8 @@ def main():
         st.session_state.recording = False
     if 'audio_buffer' not in st.session_state:
         st.session_state.audio_buffer = []
+    if 'processed_audio' not in st.session_state:
+        st.session_state.processed_audio = False
 
     # Display chat messages
     for message in st.session_state.messages:
@@ -835,10 +837,11 @@ def main():
     if input_method == "Upload Audio":
         audio_file = st.file_uploader(
             "Drag and drop file here\nLimit 200MB per file • MP3, WAV, OGG, M4A, MP4, MPEG4", 
-            type=["mp3", "wav", "ogg", "m4a", "mp4", "mpg4"]
+            type=["mp3", "wav", "ogg", "m4a", "mp4", "mpg4"],
+            key="audio_uploader"
         )
         
-        if audio_file is not None:
+        if audio_file is not None and not st.session_state.processed_audio:
             # Check file size
             if audio_file.size > 200 * 1024 * 1024:  # 200MB
                 st.error("File size exceeds 200MB limit")
@@ -851,6 +854,7 @@ def main():
                             audio_file.seek(0)
                             user_input = process_uploaded_audio(audio_file)
                         if user_input and not user_input.startswith("Error"):
+                            st.session_state.processed_audio = True
                             st.success(f"Transcribed ({SUPPORTED_LANGUAGES[detected_lang]}): {user_input}")
 
     elif input_method == "Record Voice":
@@ -893,6 +897,10 @@ def main():
                 media_stream_constraints={"audio": True, "video": False},
             )
             st.info("Recording in progress... Speak now")
+
+    # Reset processed_audio flag when switching input methods
+    if input_method != "Upload Audio":
+        st.session_state.processed_audio = False
 
     # Text input fallback
     if input_method == "Text" or not user_input:
