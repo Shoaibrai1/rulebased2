@@ -1,36 +1,8 @@
 import streamlit as st
 import re
 import random
-import nltk
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
 import time
-import speech_recognition as sr
-from pydub import AudioSegment
-import tempfile
-import os
 from langdetect import detect
-from googletrans import Translator
-import av
-import numpy as np
-
-
-# Initialize NLTK
-def initialize_nltk():
-    try:
-        nltk.data.find('tokenizers/punkt')
-        nltk.data.find('corpora/stopwords')
-        nltk.data.find('corpora/stopwords/arabic')
-    except LookupError:
-        with st.spinner("Downloading language resources (first time only)..."):
-            nltk.download('punkt')
-            nltk.download('stopwords')
-            nltk.download('stopwords', download_dir=os.path.join(nltk.data.path[0], 'corpora/stopwords/arabic'))
-
-initialize_nltk()
-
-# Initialize translator
-translator = Translator()
 
 # Supported languages
 SUPPORTED_LANGUAGES = {
@@ -43,17 +15,17 @@ SUPPORTED_LANGUAGES = {
 }
 
 # ======================
-# KNOWLEDGE BASE (same as before)
+# COMPLETE MULTILINGUAL KNOWLEDGE BASE
 # ======================
 RULES = {
     "greeting": {
         "patterns": {
-            'en': ["hi", "hello", "hey", "good morning", "greetings", "good afternoon", "good evening"],
+            'en': ["hi", "hello", "hey", "good morning", "greetings", "good afternoon", "good evening", "hi there", "hey there"],
             'ar': ["مرحبا", "السلام عليكم", "اهلا", "صباح الخير", "مساء الخير"],
             'zh': ["你好", "您好", "早上好", "下午好", "晚上好"],
             'ur': ["سلام", "ہیلو", "آداب", "صبح بخیر", "شام بخیر"],
             'hi': ["नमस्ते", "हैलो", "स्वागत", "शुभ प्रभात", "शुभ संध्या"],
-            'de': ["hallo", "guten tag", "guten morgen", "guten abend"]
+            'de': ["hallo", "guten tag", "guten morgen", "guten abend", "hi", "hey"]
         },
         "responses": {
             'en': [
@@ -88,6 +60,7 @@ RULES = {
             ]
         }
     },
+  
     "bot_name": {
         "patterns": {
             'en': ["what is your name", "who are you", "your name", "what should I call you"],
@@ -653,7 +626,8 @@ RULES = {
 - Dedizierte Projektmanager"""
     }
 },
- "default": {
+  
+    "default": {
         "responses": {
             'en': ["I'm not sure I understand. Could you rephrase that?"],
             'ar': ["أنا لست متأكدًا من فهمي. هل يمكنك إعادة صياغة ذلك؟"],
@@ -665,141 +639,109 @@ RULES = {
     }
 }
 
-def transcribe_audio(audio_path, lang='en'):
-    recognizer = sr.Recognizer()
-    try:
-        with sr.AudioFile(audio_path) as source:
-            audio_data = recognizer.record(source)
-            text = recognizer.recognize_google(audio_data, language=lang)
-            return text
-    except sr.UnknownValueError:
-        return "Could not understand audio"
-    except sr.RequestError as e:
-        return f"Error: {str(e)}"
-    except Exception as e:
-        return f"Processing error: {str(e)}"
-
 def detect_language(text):
     try:
-        lang = detect(text)
-        return lang if lang in SUPPORTED_LANGUAGES else 'en'
-    except:
+        # First check for specific scripts
+        if any('\u0900' <= char <= '\u097F' for char in text):  # Hindi/Devanagari
+            return 'hi'
+        if any('\u0600' <= char <= '\u06FF' for char in text):  # Arabic/Urdu
+            # Additional check to distinguish Arabic and Urdu
+            urdu_keywords = ["ہے", "کی", "کے", "ہیں", "میں", "سلام", "ہیلو", "آداب", "ترسیل کا وقت", 
+                             "یہ کب تیار ہوگا", "ٹائم لائن", "آخری تاریخ", "فون", "ای میل", 
+                             "رابطہ", "صبح بخیر", "ہمیں", "ہماری", "ہمارے", "کام", "پروڈکٹ", 
+                             "سروسز", "پیشکشیں", "ملازمتیں", "نوکریاں", "خالی جگہیں", "پس منظر", "کمپنی",
+                             "پروگرامنگ زبانیں", "فریم ورک", "ٹولز", "پتہ", "مقام", "آپ کا دفتر", "سافٹ ویئر کا مقام",
+                             "ہیڈکوارٹر", "آخری تاریخ", "صلاحیتیں", "لاگت", "بجٹ", "قیمت", "آپ کا نام", "شکریہ", "آپ کا شکریہ", 
+                             "تعریف", "بہت شکریہ", "آپ کا بہت شکریہ"]
+            if any(keyword in text for keyword in urdu_keywords):
+                return 'ur'
+            return 'ar'
+        if any('\u4e00' <= char <= '\u9fff' for char in text):  # Chinese
+            return 'zh'
+            
+        # Check for German specific words
+        german_keywords = ["hallo", "guten", "tag", "morgen", "abend", "danke", "bitte", 
+                          "kontakt", "telefonnummer", "e-mail", "wie", "kann", "ich", "sie", 
+                          "helfen", "frage", "problem", "adresse", "website", "unternehmen",
+                          "fallstudien","über","hintergrund","technologie-stack", "programmiersprachen",
+                          "standort", "ihr büro", "softwarestandort", "hauptsitz",
+                          "stellen sie ein", "offene stellen", "wie bewerbe ich mich", "karriere", "wir brauchen entwickler", "einstellung",
+                          "zeigen sie mir ihre projekte", "portfolio", "bisherige arbeiten", "beispiele", "fallstudien",
+                          "danke", "danke schön", "danke dir", "vielen dank", "herzlichen dank",
+                          "projektdauer", "lieferzeit", "wann wird es fertig sein", "zeitplan", "frist","stellenangebote",
+                           "preisgestaltung", "kosten", "preis","dienstleistungen", "ihre dienstleistungen", "fähigkeiten", 
+                           "was machen sie","wer bist du", "dein name",]
+        if any(keyword in text.lower() for keyword in german_keywords):
+            return 'de'
         return 'en'
+            
+        # Then try langdetect
+        lang = detect(text)
+        if lang in SUPPORTED_LANGUAGES:
+            return lang
+            
+    except:
+        pass
+    return 'en'  # default to English
 
 def preprocess_text(text, lang='en'):
-    try:
-        text = text.lower()
-        
-        if lang == 'ar':
-            text = re.sub(r'[^\w\s\u0600-\u06FF]', '', text)
-        else:
-            text = re.sub(r'[^\w\s]', '', text)
-        
-        tokens = word_tokenize(text)
-        
-        if lang == 'ar':
-            arabic_stopwords = set(stopwords.words('arabic'))
-            tokens = [word for word in tokens if word not in arabic_stopwords]
-        elif lang == 'en':
-            tokens = [word for word in tokens if word not in stopwords.words('english')]
-            
-        return " ".join(tokens)
-    except Exception:
-        return text.lower()
+    text = text.lower().strip()
+    
+    if lang == 'zh':
+        return re.sub(r'[^\w\u4e00-\u9fff]', '', text)
+    elif lang in ['ar', 'ur']:  # Handle both Arabic and Urdu
+        return re.sub(r'[^\w\s\u0600-\u06FF]', '', text)
+    elif lang == 'hi':
+        return re.sub(r'[^\w\s\u0900-\u097F]', '', text)
+    elif lang == 'de':
+        # Keep German umlauts and special characters
+        return re.sub(r'[^\w\säöüß]', '', text)
+    else:
+        return re.sub(r'[^\w\s]', '', text)
 
 def detect_intent(user_input, lang='en'):
     processed_input = preprocess_text(user_input, lang)
     
+    # Check exact matches first
     for intent, data in RULES.items():
-        if lang in data["patterns"]:
-            for pattern in data["patterns"][lang]:
-                # Special handling for Arabic and Chinese
-                if lang in ['ar', 'zh']:
-                    if pattern in processed_input:
-                        return intent
-                # Special handling for English and other languages with word boundaries
-                else:
-                    if re.search(r'\b' + re.escape(pattern) + r'\b', processed_input):
-                        return intent
+        if intent == "default":
+            continue
+            
+        patterns = data.get("patterns", {}).get(lang, [])
+        if isinstance(patterns, str):
+            patterns = [patterns]
+            
+        for pattern in patterns:
+            if pattern.lower() == processed_input:
+                return intent
+    
+    # Check partial matches
+    for intent, data in RULES.items():
+        if intent == "default":
+            continue
+            
+        patterns = data.get("patterns", {}).get(lang, [])
+        if isinstance(patterns, str):
+            patterns = [patterns]
+            
+        for pattern in patterns:
+            if pattern.lower() in processed_input:
+                return intent
+                
     return "default"
 
 def get_response(intent, lang='en'):
     try:
-        # Safely navigate the RULES dictionary
-        responses = RULES.get(intent, {}).get("responses", {})
-        lang_responses = responses.get(lang, responses.get('en', []))
+        responses = RULES.get(intent, {}).get("responses", {}).get(lang, [])
         
-        # Handle both string and list responses
-        if isinstance(lang_responses, str):
-            return lang_responses
-        elif isinstance(lang_responses, list) and lang_responses:
-            return random.choice(lang_responses)
+        if not responses and lang != 'en':
+            responses = RULES.get(intent, {}).get("responses", {}).get('en', [])
         
-        # Fallback to default responses
-        default_responses = RULES.get("default", {}).get("responses", {}).get(lang, [])
-        if isinstance(default_responses, str):
-            return default_responses
-        elif isinstance(default_responses, list) and default_responses:
-            return random.choice(default_responses)
-        
-        # Ultimate fallback
-        return "I didn't understand that. Could you rephrase?"
-        
-    except Exception as e:
-        print(f"Error getting response: {str(e)}")
-        return "Sorry, I encountered an error. Please try again."
-def audio_frame_callback(frame: av.AudioFrame) -> av.AudioFrame:
-    if st.session_state.get('recording'):
-        if 'audio_buffer' not in st.session_state:
-            st.session_state.audio_buffer = []
-        st.session_state.audio_buffer.append(frame.to_ndarray())
-    return frame
-
-def process_uploaded_audio(audio_file):
-    try:
-        # Create a temporary file with the correct extension
-        file_ext = os.path.splitext(audio_file.name)[1].lower()
-        with tempfile.NamedTemporaryFile(suffix=file_ext, delete=False) as tmp_file:
-            tmp_file.write(audio_file.getvalue())
-            temp_path = tmp_file.name
-        
-        # First try to process with original extension
-        try:
-            audio = AudioSegment.from_file(temp_path)
-        except Exception as e:
-            st.warning(f"First attempt failed: {str(e)}. Trying with forced format...")
-            # If failed, try forcing format based on extension
-            if file_ext == '.mp3':
-                audio = AudioSegment.from_mp3(temp_path)
-            elif file_ext == '.wav':
-                audio = AudioSegment.from_wav(temp_path)
-            elif file_ext == '.ogg':
-                audio = AudioSegment.from_ogg(temp_path)
-            elif file_ext in ('.m4a', '.mp4', '.mpeg4'):
-                audio = AudioSegment.from_file(temp_path, format='mp4')
-            else:
-                raise Exception(f"Unsupported file format: {file_ext}")
-        
-        # Convert to WAV for speech recognition
-        wav_path = temp_path + ".wav"
-        audio.export(wav_path, format="wav")
-        
-        # Transcribe
-        user_input = transcribe_audio(wav_path, 'en')
-        
-        # Clean up
-        os.unlink(temp_path)
-        os.unlink(wav_path)
-        
-        return user_input
-        
-    except Exception as e:
-        st.error(f"Error processing audio file: {str(e)}")
-        if os.path.exists(temp_path):
-            os.unlink(temp_path)
-        if 'wav_path' in locals() and os.path.exists(wav_path):
-            os.unlink(wav_path)
-        return None
+        if isinstance(responses, list):
+            return random.choice(responses) if responses else RULES["default"]["responses"][lang][0]
+        return responses if responses else RULES["default"]["responses"][lang][0]
+    except:
+        return RULES["default"]["responses"].get(lang, ["I'm not sure I understand. Could you rephrase that?"])[0]
 
 def main():
     st.set_page_config(
@@ -819,98 +761,38 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown(
-        """
-        <h2 style='text-align: center; color: #4B8BBE; font-family: "Georgia", serif;'>
-             Created by <strong>Muhammad Shoaib</strong>
-        </h2>
-        """,
-        unsafe_allow_html=True
-    )
-
     st.title("AI Vista Solutions Assistant")
     st.markdown("Ask about our services in English, Arabic, Chinese, Urdu, Hindi, or German")
 
-    # Initialize chat history
     if "messages" not in st.session_state:
         st.session_state.messages = [
             {"role": "assistant", "content": "Hi! I'm Your AI Vista Solutions Assistant. How can I help you today?", "lang": "en"}
         ]
-    
-    if 'recording' not in st.session_state:
-        st.session_state.recording = False
-    if 'audio_buffer' not in st.session_state:
-        st.session_state.audio_buffer = []
-    if 'processed_audio' not in st.session_state:
-        st.session_state.processed_audio = False
 
-    # Display chat messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"], avatar="🤖" if message["role"] == "assistant" else None):
             st.markdown(message["content"])
 
-    # Input method selection
-    input_method = st.radio("Choose input method:", ["Text", "Upload Audio"], horizontal=True)
-
-    user_input = ""
-    detected_lang = 'en'
-
-    if input_method == "Upload Audio":
-        audio_file = st.file_uploader(
-            "Drag and drop file here\nLimit 200MB per file • MP3, WAV, OGG, M4A, MP4, MPEG4", 
-            type=["mp3", "wav", "ogg", "m4a", "mp4", "mpg4"],
-            key="audio_uploader"
-        )
-        
-        if audio_file is not None and not st.session_state.processed_audio:
-            # Check file size
-            if audio_file.size > 200 * 1024 * 1024:  # 200MB
-                st.error("File size exceeds 200MB limit")
-            else:
-                with st.spinner("Processing audio..."):
-                    user_input = process_uploaded_audio(audio_file)
-                    if user_input:
-                        detected_lang = detect_language(user_input)
-                        if detected_lang != 'en':
-                            audio_file.seek(0)
-                            user_input = process_uploaded_audio(audio_file)
-                        if user_input and not user_input.startswith("Error"):
-                            st.session_state.processed_audio = True
-                            st.success(f"Transcribed ({SUPPORTED_LANGUAGES[detected_lang]}): {user_input}")
-
-    # Replace the voice recording section in your existing code with this improved version:
-
-    
-
-    # Reset processed_audio flag when switching input methods
-    if input_method != "Upload Audio":
-        st.session_state.processed_audio = False
-
-    # Text input fallback
-    if input_method == "Text" or not user_input:
-        user_input = st.chat_input("Type your question here...")
-        if user_input:
-            detected_lang = detect_language(user_input)
-
+    user_input = st.chat_input("Type your question here...")
     if user_input:
+        detected_lang = detect_language(user_input)
         st.session_state.messages.append({"role": "user", "content": user_input, "lang": detected_lang})
+        
         with st.chat_message("user"):
             st.markdown(user_input)
 
         with st.spinner("Thinking..."):
-            time.sleep(0.5)
+            time.sleep(0.3)
             try:
                 intent = detect_intent(user_input, detected_lang)
                 response = get_response(intent, detected_lang)
             except Exception as e:
-                response = random.choice(RULES["default"]["responses"])
                 st.error(f"System error: {str(e)}")
+                response = get_response("default", detected_lang)
 
         st.session_state.messages.append({"role": "assistant", "content": response, "lang": detected_lang})
         with st.chat_message("assistant", avatar="🤖"):
             st.markdown(response)
-
-        st.rerun()
 
 if __name__ == "__main__":
     main()
