@@ -750,16 +750,16 @@ def main():
         layout="centered",
         initial_sidebar_state="expanded"
     )
+     st.markdown(
+    """
+    <h2 style='text-align: center; color: #4B8BBE; font-family: "Georgia", serif;'>
+         Created by <strong>Muhammad Shoaib</strong>
+    </h2>
+    """,
+    unsafe_allow_html=True
+        )
 
-    st.markdown("""
-    <style>
-    .stAudio { max-width: 300px; }
-    .voice-btn { margin: 10px 0; }
-    @media (max-width: 768px) {
-        .voice-btn { width: 100%; }
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    
 
     st.title("AI Vista Solutions Assistant")
     st.markdown("Ask about our services in English, Arabic, Chinese, Urdu, Hindi, or German")
