@@ -14,9 +14,7 @@ SUPPORTED_LANGUAGES = {
     'de': 'German'
 }
 
-# ======================
-# COMPLETE MULTILINGUAL KNOWLEDGE BASE
-# ======================
+
 RULES = {
     "greeting": {
         "patterns": {
@@ -641,11 +639,11 @@ RULES = {
 
 def detect_language(text):
     try:
-        # First check for specific scripts
-        if any('\u0900' <= char <= '\u097F' for char in text):  # Hindi/Devanagari
+        
+        if any('\u0900' <= char <= '\u097F' for char in text):  
             return 'hi'
-        if any('\u0600' <= char <= '\u06FF' for char in text):  # Arabic/Urdu
-            # Additional check to distinguish Arabic and Urdu
+        if any('\u0600' <= char <= '\u06FF' for char in text):  
+            
             urdu_keywords = ["ہے", "کی", "کے", "ہیں", "میں", "سلام", "ہیلو", "آداب", "ترسیل کا وقت", 
                              "یہ کب تیار ہوگا", "ٹائم لائن", "آخری تاریخ", "فون", "ای میل", 
                              "رابطہ", "صبح بخیر", "ہمیں", "ہماری", "ہمارے", "کام", "پروڈکٹ", 
@@ -656,10 +654,10 @@ def detect_language(text):
             if any(keyword in text for keyword in urdu_keywords):
                 return 'ur'
             return 'ar'
-        if any('\u4e00' <= char <= '\u9fff' for char in text):  # Chinese
+        if any('\u4e00' <= char <= '\u9fff' for char in text):  
             return 'zh'
             
-        # Check for German specific words
+        
         german_keywords = ["hallo", "guten", "tag", "morgen", "abend", "danke", "bitte", 
                           "kontakt", "telefonnummer", "e-mail", "wie", "kann", "ich", "sie", 
                           "helfen", "frage", "problem", "adresse", "website", "unternehmen",
@@ -675,14 +673,14 @@ def detect_language(text):
             return 'de'
         return 'en'
             
-        # Then try langdetect
+       
         lang = detect(text)
         if lang in SUPPORTED_LANGUAGES:
             return lang
             
     except:
         pass
-    return 'en'  # default to English
+    return 'en'  
 
 def preprocess_text(text, lang='en'):
     text = text.lower().strip()
