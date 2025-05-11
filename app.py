@@ -4,7 +4,7 @@ import random
 import time
 from langdetect import detect
 
-# Supported languages
+
 SUPPORTED_LANGUAGES = {
     'en': 'English',
     'ar': 'Arabic',
@@ -27,34 +27,34 @@ RULES = {
         },
         "responses": {
             'en': [
-                "Hello! Welcome to **AI Vista Solutions**. How can I assist you today?",
+                "Hello! Welcome to ** Shoaib Vista Solutions**. How can I assist you today?",
                 "Hi there! I'm your AI Vista assistant. What can I do for you?",
-                "Greetings! I'm ALI from AI Vista Solutions. How may I help you?"
+                "Greetings! I'm Shoaib from AI Vista Solutions. How may I help you?"
             ],
             'ar': [
                 "مرحبا! أهلا بكم في **AI Vista Solutions**. كيف يمكنني مساعدتك اليوم؟",
                 "أهلاً! أنا مساعدك في AI Vista. كيف يمكنني مساعدتك؟",
-                "تحياتي! أنا ALI من AI Vista Solutions. كيف يمكنني مساعدتك؟"
+                "تحياتي! أنا Shoaib من AI Vista Solutions. كيف يمكنني مساعدتك؟"
             ],
             'zh': [
                 "您好！欢迎来到**AI Vista Solutions**。我今天能为您提供什么帮助？",
                 "你好！我是AI Vista的助手。我能为您做什么？",
-                "问候！我是AI Vista Solutions的ALI。我如何帮助您？"
+                "问候！我是AI Vista Solutions的Shoaib。我如何帮助您？"
             ],
             'ur': [
                 "ہیلو! **AI Vista Solutions** میں خوش آمدید۔ میں آپ کی کس طرح مدد کر سکتا ہوں؟",
                 "ہیلو! میں AI Vista کا اسسٹنٹ ہوں۔ میں آپ کی کیا خدمت کر سکتا ہوں؟",
-                "سلام! میں AI Vista Solutions سے ALI ہوں۔ میں آپ کی کس طرح مدد کر سکتا ہوں؟"
+                "سلام! میں AI Vista Solutions سے Shoaib ہوں۔ میں آپ کی کس طرح مدد کر سکتا ہوں؟"
             ],
             'hi': [
                 "नमस्ते! **AI Vista Solutions** में आपका स्वागत है। मैं आपकी कैसे सहायता कर सकता हूँ?",
                 "हैलो! मैं AI Vista का सहायक हूँ। मैं आपकी क्या मदद कर सकता हूँ?",
-                "अभिवादन! मैं AI Vista Solutions से ALI हूँ। मैं आपकी कैसे मदद कर सकता हूँ?"
+                "अभिवादन! मैं AI Vista Solutions से Shoaib हूँ। मैं आपकी कैसे मदद कर सकता हूँ?"
             ],
             'de': [
                 "Hallo! Willkommen bei **AI Vista Solutions**. Wie kann ich Ihnen helfen?",
                 "Guten Tag! Ich bin Ihr AI Vista-Assistent. Womit kann ich Ihnen helfen?",
-                "Grüße! Ich bin ALI von AI Vista Solutions. Wie kann ich Ihnen helfen?"
+                "Grüße! Ich bin Shoaib von AI Vista Solutions. Wie kann ich Ihnen helfen?"
             ]
         }
     },
@@ -70,34 +70,34 @@ RULES = {
         },
         "responses": {
             'en': [
-                "I'm **ALI**, your virtual assistant from AI Vista Solutions!",
-                "You can call me **ALI** - your friendly AI helper from AI Vista Solutions!",
-                "I'm **ALI**, here to assist with all your tech queries."
+                "I'm **Shoaib**, your virtual assistant from AI Vista Solutions!",
+                "You can call me **Shoaib** - your friendly AI helper from AI Vista Solutions!",
+                "I'm **Shoaib**, here to assist with all your tech queries."
             ],
             'ar': [
-                "أنا **ALI**، مساعدك الافتراضي من AI Vista Solutions!",
-                "يمكنك مناداتي **ALI** - مساعدك الودود من AI Vista Solutions!",
-                "أنا **ALI**، هنا لمساعدتك في جميع استفساراتك التقنية."
+                "أنا **Shoaib**، مساعدك الافتراضي من AI Vista Solutions!",
+                "يمكنك مناداتي **Shoaib** - مساعدك الودود من AI Vista Solutions!",
+                "أنا **Shoaib**، هنا لمساعدتك في جميع استفساراتك التقنية."
             ],
             'zh': [
-                "我是**ALI**，您的AI Vista Solutions虚拟助手！",
-                "您可以叫我**ALI**——您来自AI Vista Solutions的友好AI助手！",
-                "我是**ALI**，在这里帮助您解决所有技术问题。"
+                "我是**Shoaib**，您的AI Vista Solutions虚拟助手！",
+                "您可以叫我**Shoaib**——您来自AI Vista Solutions的友好AI助手！",
+                "我是**Shoaib**，在这里帮助您解决所有技术问题。"
             ],
             'ur': [
-                "میں **ALI** ہوں، AI Vista Solutions کا آپ کا ورچوئل اسسٹنٹ!",
-                "آپ مجھے **ALI** کہہ سکتے ہیں - AI Vista Solutions کا آپ کا دوستانہ AI مددگار!",
-                "میں **ALI** ہوں، آپ کے تمام ٹیکنالوجی کے سوالات میں مدد کے لیے حاضر ہوں۔"
+                "میں **Shoaib** ہوں، AI Vista Solutions کا آپ کا ورچوئل اسسٹنٹ!",
+                "آپ مجھے **Shoaib** کہہ سکتے ہیں - AI Vista Solutions کا آپ کا دوستانہ AI مددگار!",
+                "میں **Shoaib** ہوں، آپ کے تمام ٹیکنالوجی کے سوالات میں مدد کے لیے حاضر ہوں۔"
             ],
             'hi': [
-                "मैं **ALI** हूँ, AI Vista Solutions से आपका वर्चुअल सहायक!",
-                "आप मुझे **ALI** कह सकते हैं - AI Vista Solutions से आपका मित्रवत AI सहायक!",
-                "मैं **ALI** हूँ, आपके सभी तकनीकी प्रश्नों में सहायता के लिए यहां हूँ।"
+                "मैं **Shoaib** हूँ, AI Vista Solutions से आपका वर्चुअल सहायक!",
+                "आप मुझे **Shoaib** कह सकते हैं - AI Vista Solutions से आपका मित्रवत AI सहायक!",
+                "मैं **Shoaib** हूँ, आपके सभी तकनीकी प्रश्नों में सहायता के लिए यहां हूँ।"
             ],
             'de': [
-                "Ich bin **ALI**, Ihr virtueller Assistent von AI Vista Solutions!",
-                "Sie können mich **ALI** nennen - Ihr freundlicher KI-Helfer von AI Vista Solutions!",
-                "Ich bin **ALI**, hier um Ihnen bei allen technischen Fragen zu helfen."
+                "Ich bin **Shoaib**, Ihr virtueller Assistent von AI Vista Solutions!",
+                "Sie können mich **Shoaib** nennen - Ihr freundlicher KI-Helfer von AI Vista Solutions!",
+                "Ich bin **Shoaib**, hier um Ihnen bei allen technischen Fragen zu helfen."
             ]
         }
     },
@@ -692,7 +692,7 @@ def preprocess_text(text, lang='en'):
     elif lang == 'hi':
         return re.sub(r'[^\w\s\u0900-\u097F]', '', text)
     elif lang == 'de':
-        # Keep German umlauts and special characters
+      
         return re.sub(r'[^\w\säöüß]', '', text)
     else:
         return re.sub(r'[^\w\s]', '', text)
@@ -700,7 +700,7 @@ def preprocess_text(text, lang='en'):
 def detect_intent(user_input, lang='en'):
     processed_input = preprocess_text(user_input, lang)
     
-    # Check exact matches first
+   
     for intent, data in RULES.items():
         if intent == "default":
             continue
@@ -713,7 +713,7 @@ def detect_intent(user_input, lang='en'):
             if pattern.lower() == processed_input:
                 return intent
     
-    # Check partial matches
+  
     for intent, data in RULES.items():
         if intent == "default":
             continue
