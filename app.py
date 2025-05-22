@@ -748,7 +748,7 @@ def main():
         layout="centered",
         initial_sidebar_state="expanded"
     )
-    
+    st.markdown("<h3 style='color: blue;'>Created by Muhammad Shoaib</h3>", unsafe_allow_html=True)
 
     
 
