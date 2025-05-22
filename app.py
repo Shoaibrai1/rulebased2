@@ -760,7 +760,7 @@ def main():
     
 
     st.title("AI Vista Solutions Assistant")
-    st.markdown("Ask about our services in English, Arabic, Chinese, Urdu, Hindi, or German")
+    st.markdown("Ask about our services of Software Company in English, Arabic, Chinese, Urdu, Hindi, or German")
 
     if "messages" not in st.session_state:
         st.session_state.messages = [
