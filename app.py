@@ -748,14 +748,7 @@ def main():
         layout="centered",
         initial_sidebar_state="expanded"
     )
-    st.markdown(
-    """
-    <h2 style='text-align: center; color: #4B8BBE; font-family: "Georgia", serif;'>
-         Created by <strong>Muhammad Shoaib Sattar</strong>
-    </h2>
-    """,
-    unsafe_allow_html=True
-        )
+    
 
     
 
